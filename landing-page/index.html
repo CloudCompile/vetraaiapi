@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vetra — Free AI API for Roleplayers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>body{font-family:'Inter',sans-serif}</style>
+</head>
+<body class="bg-slate-950 text-white">
+  <nav class="border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center font-bold text-white">V</div>
+        <span class="font-bold text-lg">Vetra</span>
+      </div>
+      <div class="flex gap-6 text-sm text-slate-400">
+        <a href="#features" class="hover:text-white transition">Features</a>
+        <a href="#api" class="hover:text-white transition">API</a>
+        <a href="https://github.com/CloudCompile/vetraaiapi" target="_blank" class="hover:text-white transition">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="max-w-6xl mx-auto px-6 py-24 text-center">
+    <h1 class="text-5xl md:text-7xl font-black tracking-tight mb-6">
+      <span class="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">Free AI</span>
+      for Roleplayers
+    </h1>
+    <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
+      Vetra is an OpenAI-compatible chat API built for the RP community.
+      No credit card. No quotas. Just bring your characters and start creating.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="#api" class="px-6 py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-semibold transition">Get Started</a>
+      <a href="https://github.com/CloudCompile/vetraaiapi" target="_blank" class="px-6 py-3 border border-slate-700 hover:border-slate-500 rounded-xl font-semibold transition">View on GitHub</a>
+    </div>
+  </section>
+
+  <section id="features" class="border-y border-slate-800 bg-slate-900/50">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <h2 class="text-3xl font-bold text-center mb-14">Built for Roleplay</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="w-10 h-10 bg-violet-600/20 text-violet-400 rounded-lg flex items-center justify-center mb-4 text-xl">🎭</div>
+          <h3 class="font-bold mb-2">Character Context</h3>
+          <p class="text-slate-400 text-sm">Persist character personalities across sessions. Your persona stays consistent.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="w-10 h-10 bg-violet-600/20 text-violet-400 rounded-lg flex items-center justify-center mb-4 text-xl">💬</div>
+          <h3 class="font-bold mb-2">Conversation Memory</h3>
+          <p class="text-slate-400 text-sm">Long-form context windows so your stories never lose the thread.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="w-10 h-10 bg-violet-600/20 text-violet-400 rounded-lg flex items-center justify-center mb-4 text-xl">⚡</div>
+          <h3 class="font-bold mb-2">Easy Persona Switching</h3>
+          <p class="text-slate-400 text-sm">Swap characters on the fly without losing your place in the story.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="api" class="max-w-6xl mx-auto px-6 py-20">
+    <h2 class="text-3xl font-bold text-center mb-14">Simple API</h2>
+    <div class="max-w-3xl mx-auto">
+      <div class="rounded-2xl bg-slate-900 border border-slate-800 p-6 overflow-x-auto">
+        <pre class="text-sm text-slate-300"><code>curl https://vetra-api.onrender.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: vetra-free-key-001" \
+  -d '{
+    "model": "openrouter/auto",
+    "messages": [
+      {"role": "system", "content": "You are a wise dragon in a fantasy realm."},
+      {"role": "user", "content": "Tell me about your hoard."}
+    ]
+  }'</code></pre>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-6 mt-10 text-center">
+        <div>
+          <div class="text-2xl font-black text-violet-400">OpenAI-compatible</div>
+          <div class="text-slate-400 text-sm mt-1">Drop-in replacement</div>
+        </div>
+        <div>
+          <div class="text-2xl font-black text-violet-400">Free Forever</div>
+          <div class="text-slate-400 text-sm mt-1">No credit card required</div>
+        </div>
+        <div>
+          <div class="text-2xl font-black text-violet-400">Streaming</div>
+          <div class="text-slate-400 text-sm mt-1">Real-time responses</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-slate-800 py-10 text-center text-slate-500 text-sm">
+    <p>© 2025 Vetra. Built with ❤️ for the RP community.</p>
+  </footer>
+</body>
+</html>

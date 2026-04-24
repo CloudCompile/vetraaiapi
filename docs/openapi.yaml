@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: Vetra API
+  description: |
+    A free AI API for roleplayers. OpenAI-compatible chat completions
+    powered by OpenRouter. No credit card required.
+  version: 1.0.0
+  contact:
+    name: Vetra Team
+    url: https://github.com/CloudCompile/vetraaiapi
+servers:
+  - url: https://vetra-api.onrender.com
+    description: Production
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: vetra-api
+                  version:
+                    type: string
+                    example: 1.0.0
+  /v1/models:
+    get:
+      summary: List available models
+      operationId: listModels
+      security:
+        - apiKey: []
+      responses:
+        '200':
+          description: List of models
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Model'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Invalid API key
+  /v1/chat/completions:
+    post:
+      summary: Create chat completion
+      operationId: createChatCompletion
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatCompletionRequest'
+      responses:
+        '200':
+          description: Chat completion response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatCompletionResponse'
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Invalid API key
+        '500':
+          description: Internal server error
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    ChatMessage:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum: [system, user, assistant]
+        content:
+          type: string
+    ChatCompletionRequest:
+      type: object
+      required:
+        - model
+        - messages
+      properties:
+        model:
+          type: string
+          description: Model ID (e.g., openrouter/auto)
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        stream:
+          type: boolean
+          default: false
+        temperature:
+          type: number
+          default: 0.7
+        max_tokens:
+          type: integer
+          default: 1024
+        top_p:
+          type: number
+          default: 1
+        presence_penalty:
+          type: number
+          default: 0
+        frequency_penalty:
+          type: number
+          default: 0
+    ChatCompletionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+        created:
+          type: integer
+        model:
+          type: string
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              message:
+                $ref: '#/components/schemas/ChatMessage'
+              finish_reason:
+                type: string

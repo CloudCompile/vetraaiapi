@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: vetra-api
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_KEYS
+        value: vetra-free-key-001,vetra-free-key-002
+      - key: OPENROUTER_API_KEY
+        sync: false
