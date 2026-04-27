@@ -2,8 +2,10 @@ import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
 import { NextRequest, NextResponse } from "next/server";
 
 export default async function middleware(req: NextRequest) {
-  // Let Next.js route handlers manage their own API authentication using the Node runtime
-  // For page routes: use Kinde's default redirect-to-login behavior at the Edge
+  // Graceful degradation: skip Kinde auth if not configured
+  if (!process.env.KINDE_CLIENT_ID || !process.env.KINDE_CLIENT_SECRET) {
+    return NextResponse.next();
+  }
   return withAuth(req, {
     isReturnToCurrentPage: true,
   });
