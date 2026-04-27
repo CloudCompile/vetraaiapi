@@ -4,18 +4,41 @@ info:
   description: |
     A free AI API for roleplayers. OpenAI-compatible chat completions
     powered by OpenRouter. No credit card required.
+    
+    ## Roleplayer Features
+    
+    Vetra is built specifically for the RP community with these capabilities:
+    
+    - **Character Context**: Store and persist character personalities across sessions
+    - **Conversation Memory**: Maintain long-form context for ongoing stories
+    - **Persona Switching**: Seamlessly swap between characters without losing story state
+    
+    ## Authentication
+    
+    All API requests require an `x-api-key` header with your API key.
+    
+    ## Rate Limits
+    
+    - Free tier: 100 requests/day
+    - Rate limit headers included in responses
   version: 1.0.0
   contact:
     name: Vetra Team
     url: https://github.com/CloudCompile/vetraaiapi
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
   - url: https://vetra-api.onrender.com
     description: Production
+  - url: http://localhost:3000
+    description: Local development
 paths:
   /health:
     get:
       summary: Health check
       operationId: healthCheck
+      description: Returns the health status of the API service
       responses:
         '200':
           description: Service is healthy
@@ -37,6 +60,9 @@ paths:
     get:
       summary: List available models
       operationId: listModels
+      description: |
+        Returns a list of available models. By default, use `openrouter/auto`
+        to let OpenRouter select the best model for your use case.
       security:
         - apiKey: []
       responses:
@@ -52,13 +78,16 @@ paths:
                     items:
                       $ref: '#/components/schemas/Model'
         '401':
-          description: Unauthorized
+          description: Unauthorized - missing or invalid API key
         '403':
-          description: Invalid API key
+          description: Forbidden - invalid API key
   /v1/chat/completions:
     post:
       summary: Create chat completion
       operationId: createChatCompletion
+      description: |
+        Send a chat completion request. Supports both streaming and
+        non-streaming responses. Compatible with OpenAI's chat API.
       security:
         - apiKey: []
       requestBody:
@@ -77,30 +106,265 @@ paths:
             text/event-stream:
               schema:
                 type: string
+              description: Server-sent events for streaming
+        '400':
+          description: Bad request - invalid request body
+        '401':
+          description: Unauthorized - missing or invalid API key
+        '403':
+          description: Forbidden - invalid API key
+        '429':
+          description: Rate limit exceeded
+        '500':
+          description: Internal server error
+  /v1/sessions:
+    post:
+      summary: Create a new session
+      operationId: createSession
+      description: |
+        Create a new conversation session. Sessions help maintain context
+        across multiple API calls. Returns a session ID to use in subsequent
+        requests.
+      security:
+        - apiKey: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '200':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Unauthorized
+        '429':
+          description: Rate limit exceeded
+    get:
+      summary: List sessions
+      operationId: listSessions
+      description: |
+        List all sessions for the authenticated user. Returns session
+        metadata including character names and last activity.
+      security:
+        - apiKey: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+  /v1/sessions/{sessionId}:
+    get:
+      summary: Get session details
+      operationId: getSession
+      description: Get a specific session by ID with conversation history
+      security:
+        - apiKey: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session details with messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetail'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Session not found
+    delete:
+      summary: Delete a session
+      operationId: deleteSession
+      description: Delete a session and its conversation history
+      security:
+        - apiKey: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Session not found
+  /v1/characters:
+    post:
+      summary: Create a character
+      operationId: createCharacter
+      description: |
+        Create a character profile with name, description, and personality.
+        Characters can be used in sessions to maintain consistent personas.
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterRequest'
+      responses:
+        '200':
+          description: Character created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
         '400':
           description: Bad request
         '401':
           description: Unauthorized
-        '403':
-          description: Invalid API key
-        '500':
-          description: Internal server error
+    get:
+      summary: List characters
+      operationId: listCharacters
+      description: List all characters for the authenticated user
+      security:
+        - apiKey: []
+      responses:
+        '200':
+          description: List of characters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Character'
+        '401':
+          description: Unauthorized
+  /v1/characters/{characterId}:
+    get:
+      summary: Get character details
+      operationId: getCharacter
+      description: Get a specific character by ID
+      security:
+        - apiKey: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Character details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Character not found
+    put:
+      summary: Update a character
+      operationId: updateCharacter
+      description: Update a character's profile
+      security:
+        - apiKey: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCharacterRequest'
+      responses:
+        '200':
+          description: Character updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Character not found
+    delete:
+      summary: Delete a character
+      operationId: deleteCharacter
+      description: Delete a character
+      security:
+        - apiKey: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Character deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Character not found
 components:
   securitySchemes:
     apiKey:
       type: apiKey
       in: header
       name: x-api-key
+      description: Your API key from the dashboard
   schemas:
     Model:
       type: object
       properties:
         id:
           type: string
+          example: openrouter/auto
         name:
           type: string
+          example: Auto (Best Available)
         description:
           type: string
+          example: Automatically selects the best model for your request
     ChatMessage:
       type: object
       required:
@@ -110,8 +374,13 @@ components:
         role:
           type: string
           enum: [system, user, assistant]
+          description: The role of the message sender
         content:
           type: string
+          description: The content of the message
+        name:
+          type: string
+          description: Optional name for the speaker (for multi-character sessions)
     ChatCompletionRequest:
       type: object
       required:
@@ -120,40 +389,65 @@ components:
       properties:
         model:
           type: string
-          description: Model ID (e.g., openrouter/auto)
+          description: |
+            Model ID. Use `openrouter/auto` for automatic model selection,
+            or specify a specific model like `openrouter/anthropic/claude-3-haiku`
         messages:
           type: array
           items:
             $ref: '#/components/schemas/ChatMessage'
+          description: The conversation history
         stream:
           type: boolean
           default: false
+          description: Enable server-sent events for streaming responses
         temperature:
           type: number
           default: 0.7
+          minimum: 0
+          maximum: 2
+          description: Sampling temperature (higher = more creative)
         max_tokens:
           type: integer
           default: 1024
+          minimum: 1
+          maximum: 4096
+          description: Maximum tokens to generate
         top_p:
           type: number
           default: 1
+          description: Nucleus sampling parameter
         presence_penalty:
           type: number
           default: 0
+          description: Penalty for repeating tokens
         frequency_penalty:
           type: number
           default: 0
+          description: Penalty for frequent tokens
+        session_id:
+          type: string
+          format: uuid
+          description: Optional session ID to continue a conversation
+        character_id:
+          type: string
+          format: uuid
+          description: Optional character ID to use a saved persona
     ChatCompletionResponse:
       type: object
       properties:
         id:
           type: string
+          example: chatcmpl-abc123
         object:
           type: string
+          example: chat.completion
         created:
           type: integer
+          example: 1699000000
         model:
           type: string
+          example: openrouter/auto
         choices:
           type: array
           items:
@@ -161,7 +455,134 @@ components:
             properties:
               index:
                 type: integer
+                example: 0
               message:
                 $ref: '#/components/schemas/ChatMessage'
               finish_reason:
                 type: string
+                example: stop
+        usage:
+          type: object
+          properties:
+            prompt_tokens:
+              type: integer
+            completion_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+    CreateSessionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Optional name for the session
+        character_id:
+          type: string
+          format: uuid
+          description: Optional character to use in this session
+        system_prompt:
+          type: string
+          description: Optional system prompt override
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        character_id:
+          type: string
+          format: uuid
+          nullable: true
+        message_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    SessionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        character:
+          $ref: '#/components/schemas/Character'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateCharacterRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Character name
+        description:
+          type: string
+          description: Brief description of the character
+        personality:
+          type: string
+          description: Detailed personality traits and quirks
+        backstory:
+          type: string
+          description: Character history and background
+        system_prompt:
+          type: string
+          description: Custom system prompt for this character
+        avatar_url:
+          type: string
+          description: URL to character image
+    UpdateCharacterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        personality:
+          type: string
+        backstory:
+          type: string
+        system_prompt:
+          type: string
+        avatar_url:
+          type: string
+    Character:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        personality:
+          type: string
+        backstory:
+          type: string
+        system_prompt:
+          type: string
+        avatar_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
