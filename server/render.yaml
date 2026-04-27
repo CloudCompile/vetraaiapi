@@ -1,0 +1,42 @@
+# Vetra API Server — Render Blueprint
+# Free tier deployment (starter plan on-demand)
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - name: vetra-api
+    region: oregon
+    plan: free
+    runtime: node
+    repo: https://github.com/CloudCompile/vetraaiapi.git
+    branch: feat/standalone-api-server
+    rootDir: server
+    buildCommand: echo "Pre-built dist in repo — no build needed"
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      # Add your OpenRouter keys at https://render.com/dashboard
+      # Required for chat completions to work
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY_1
+        sync: false
+      - key: OPENROUTER_API_KEY_2
+        sync: false
+      - key: OPENROUTER_API_KEY_3
+        sync: false
+      - key: OPENROUTER_API_KEY_4
+        sync: false
+      - key: OPENROUTER_API_KEY_5
+        sync: false
+      # Optional: system admin key for unlimited requests
+      - key: SYSTEM_API_KEY
+        sync: false
+      # Optional: override rate limits
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "20"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
