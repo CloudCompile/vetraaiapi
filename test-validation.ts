@@ -6,7 +6,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 async function test() {
-  const key = process.argv[2] || 'cgpt_822b7637a03648abb9d59e460c1fe921';
+  const key = process.argv[2] || 'elholk_822b7637a03648abb9d59e460c1fe921';
   console.log(`Testing validation for key: ${key}`);
   
   try {

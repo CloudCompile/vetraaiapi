@@ -38,7 +38,7 @@ async function simulateProPurchase() {
     ],
     timestamp: new Date().toISOString(),
     footer: {
-      text: 'CloudGPT Billing System (Simulation)'
+      text: 'Elholk Billing System (Simulation)'
     }
   };
 

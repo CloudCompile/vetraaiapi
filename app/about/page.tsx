@@ -33,7 +33,7 @@ export default function AboutPage() {
                   Our <span className="premium-text">Story</span>
                 </h1>
                 <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
-                  CloudGPT was born from a vision to democratize access to the world's most powerful artificial intelligence models through a single, unified interface.
+                  Elholk was born from a vision to democratize access to the world's most powerful artificial intelligence models through a single, unified interface.
                 </p>
               </div>
 
@@ -43,12 +43,12 @@ export default function AboutPage() {
                     <Users className="h-3.5 w-3.5" />
                     <span>The Founders</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight">CJ Hauser & Aaron Miller</h2>
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight">CJ Hauser</h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Before founding CloudGPT, CJ and Aaron spent over a year as core contributors at Pollinations.ai. During their time there, they deep-dived into the complexities of generative AI and global infrastructure.
+                    Before founding Elholk, CJ spent over a year as a core contributor at Pollinations.ai. During their time there, they deep-dived into the complexities of generative AI and global infrastructure.
                   </p>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Inspired by the potential of decentralized AI and community-driven development, they decided to build something new. Something that would simplify the developer experience while putting the community at the heart of the system.
+                    Inspired by the potential of decentralized AI and community-driven development, CJ decided to build something new. Something that would simplify the developer experience while putting the community at the heart of the system.
                   </p>
                 </div>
                 <div className="relative mt-8 md:mt-0">
@@ -105,7 +105,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 text-center">
           <Logo className="mx-auto mb-6 grayscale opacity-50" />
           <p className="text-sm text-slate-500 font-medium">
-            © 2026 CloudGPT. All rights reserved.
+            © 2026 Elholk. All rights reserved.
           </p>
         </div>
       </footer>

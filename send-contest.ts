@@ -9,18 +9,18 @@ const SUBMISSION_WEBHOOK = 'https://discord.com/api/webhooks/1458951284831948959
 
 async function sendContestAnnouncement() {
   const embed = {
-    title: '🚀 CloudGPT Developer Contest: Build & Win!',
-    description: "We're launching a Developer Contest to see who can build the best project using the CloudGPT API. Whether it's a polished app or a wild experiment, we want to see it!",
+    title: '🚀 Elholk Developer Contest: Build & Win!',
+    description: "We're launching a Developer Contest to see who can build the best project using the Elholk API. Whether it's a polished app or a wild experiment, we want to see it!",
     color: 0x10b981, // Emerald color
     fields: [
       {
         name: '🛠️ The Challenge',
-        value: 'Create any project you want using the CloudGPT API. Web app, bot, tool, or even a cursed experiment. If it uses our API in a meaningful way, it counts.',
+        value: 'Create any project you want using the Elholk API. Web app, bot, tool, or even a cursed experiment. If it uses our API in a meaningful way, it counts.',
         inline: false
       },
       {
         name: '🏆 The Prize',
-        value: '**1 Month of CloudGPT Pro** for the winner!',
+        value: '**1 Month of Elholk Pro** for the winner!',
         inline: false
       },
       {
@@ -30,7 +30,7 @@ async function sendContestAnnouncement() {
       },
       {
         name: '📌 Judging Criteria',
-        value: '• **Creativity**: How unique is your idea?\n• **Technical Execution**: How well is it built?\n• **Integration**: How effectively is CloudGPT used?\n• **Cool Factor**: Overall usefulness or wow-factor.',
+        value: '• **Creativity**: How unique is your idea?\n• **Technical Execution**: How well is it built?\n• **Integration**: How effectively is Elholk used?\n• **Cool Factor**: Overall usefulness or wow-factor.',
         inline: false
       },
       {
@@ -40,7 +40,7 @@ async function sendContestAnnouncement() {
       }
     ],
     footer: {
-      text: 'CloudGPT Contest — May the best dev win!',
+      text: 'Elholk Contest — May the best dev win!',
       icon_url: 'https://raw.githubusercontent.com/lucide-software/lucide/main/icons/trophy.png'
     },
     timestamp: new Date().toISOString()
@@ -53,7 +53,7 @@ async function sendContestAnnouncement() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        content: "@everyone 🛠️ **The CloudGPT Developer Contest is officially OPEN!**",
+        content: "@everyone 🛠️ **The Elholk Developer Contest is officially OPEN!**",
         embeds: [embed]
       }),
     });

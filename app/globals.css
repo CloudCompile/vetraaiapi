@@ -4,8 +4,8 @@
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: #10b981; /* Emerald 500 */
-  --color-primary-dark: #059669; /* Emerald 600 */
+  --color-primary: #6366f1; /* Indigo 500 */ 
+  --color-primary-dark: #4f46e5; /* Indigo 600 */ 
   --color-secondary: #0ea5e9; /* Sky 500 */
   --color-accent: #34d399; /* Emerald 400 */
   --color-muted: var(--muted-foreground);
@@ -49,26 +49,16 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #020617;
-  --border: #e2e8f0;
-  --muted: #f8fafc;
-  --muted-foreground: #64748b;
-  --sidebar: #f8fafc;
-  --primary-glow: rgba(99, 102, 241, 0.15);
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --border: #27272a;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --sidebar: #09090b;
+  --primary-glow: rgba(34, 211, 238, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #f8fafc;
-    --border: #1e293b;
-    --muted: #0f172a;
-    --muted-foreground: #94a3b8;
-    --sidebar: #030712;
-    --primary-glow: rgba(99, 102, 241, 0.1);
-  }
-}
+/* Keep dark by default; no light theme */
 
 body {
   color: var(--foreground);

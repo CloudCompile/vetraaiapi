@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
+
 import { extractApiKey, validateApiKey, trackUsage, checkRateLimit, getRateLimitInfo, checkDailyLimit, getDailyLimitInfo, ApiKey, applyPlanOverride, applyPeakHoursLimit } from '@/lib/api-keys';
 import { IMAGE_MODELS, PROVIDER_URLS, ImageModel, PREMIUM_MODELS } from '@/lib/providers';
 import { getCorsHeaders, getPollinationsApiKey, getPollinationsApiKeys, safeResponseJson, hasProAccess } from '@/lib/utils';
@@ -53,7 +53,9 @@ export async function POST(request: NextRequest) {
   try {
     let sessionUserId = null;
     try {
-      const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+      const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
       if (isAuthenticated && claims) {
         sessionUserId = claims.sub;
       }
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
     } else if (sessionUserId) {
       // Fetch plan for session users if no API key is provided
       const { data: profile } = await supabaseAdmin
-        .from('profiles')
+        .from('elholk_profiles')
         .select('plan, email')
         .eq('id', sessionUserId)
         .maybeSingle();
@@ -361,7 +363,7 @@ export async function POST(request: NextRequest) {
       }
 
     } else if (model.provider === 'stablehorde') {
-      const hordeApiKey = process.env.STABLEHORDE_API_KEY || process.env.STABLE_HORDE_API_KEY || '0000000000';
+      const hordeApiKey = process.env.AI_HORDE_API_KEY || process.env.STABLEHORDE_API_KEY || process.env.STABLE_HORDE_API_KEY || '0000000000';
       const hordeUrl = PROVIDER_URLS.stablehorde;
       const modelName = getStableHordeModelName(model.id);
       
@@ -370,7 +372,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
           'apikey': hordeApiKey,
-          'Client-Agent': 'CloudGPT:1.0:cloudgptapi@github.com',
+          'Client-Agent': 'Elholk:1.0:cloudgptapi@github.com',
         },
         body: JSON.stringify({
           prompt: body.prompt,
@@ -407,7 +409,7 @@ export async function POST(request: NextRequest) {
       while (attempts < maxAttempts) {
         await new Promise(r => setTimeout(r, 2000));
         const check = await fetch(`${hordeUrl}/generate/check/${requestId}`, {
-          headers: { 'Client-Agent': 'CloudGPT:1.0:cloudgptapi@github.com' }
+          headers: { 'Client-Agent': 'Elholk:1.0:cloudgptapi@github.com' }
         });
         
         if (!check.ok) {
@@ -419,7 +421,7 @@ export async function POST(request: NextRequest) {
         
         if (checkData.done) {
           const status = await fetch(`${hordeUrl}/generate/status/${requestId}`, {
-            headers: { 'Client-Agent': 'CloudGPT:1.0:cloudgptapi@github.com' }
+            headers: { 'Client-Agent': 'Elholk:1.0:cloudgptapi@github.com' }
           });
           const statusData = await status.json();
           if (statusData.generations?.[0]?.img) {

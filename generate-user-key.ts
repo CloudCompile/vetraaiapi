@@ -18,7 +18,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 function generateApiKey(): string {
-  const prefix = 'cgpt_';
+  const prefix = 'elholk_';
   const key = uuidv4().replace(/-/g, '');
   return `${prefix}${key}`;
 }
@@ -29,7 +29,7 @@ async function createKeyForUser(query: string) {
   try {
     // 1. Get user profile (by email or ID)
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
+      .from('elholk_profiles')
       .select('id, email, plan')
       .or(`email.eq.${query},id.eq.${query}`)
       .maybeSingle();
@@ -52,7 +52,7 @@ async function createKeyForUser(query: string) {
 
     // 3. Insert into api_keys table
     const { data: apiKey, error: insertError } = await supabaseAdmin
-      .from('api_keys')
+      .from('elholk_api_keys')
       .insert({
         key: newKey,
         user_id: profile.id,

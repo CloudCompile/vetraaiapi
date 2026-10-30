@@ -183,7 +183,7 @@ export const modelAliases: Record<string, string> = {
   'llama-3.3-70b-liz': 'liz-llama-3.3-70b',
 };
 
-// Provider-specific model mapping (CloudGPT ID -> Provider ID)
+// Provider-specific model mapping (Elholk ID -> Provider ID)
 export const PROVIDER_MODEL_MAPPING: Record<string, string> = {
   // Liz Proxy Mapping
   'liz-claude-3-5-sonnet': 'claude-3.5-sonnet',
@@ -253,10 +253,8 @@ export const PROVIDER_URLS = {
   pollinations: 'https://gen.pollinations.ai',
   openrouter: 'https://openrouter.ai',
   stablehorde: 'https://stablehorde.net/api/v2',
-  meridian: 'https://meridianlabsapp.website/api',
   github: 'https://models.inference.ai.azure.com',
   poe: 'https://api.poe.com/v1',
-  liz: 'https://lizley.zeabur.app',
 };
 
 export function createChatTransformStream(

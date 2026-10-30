@@ -24,13 +24,12 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLogto } from '@logto/react';
+import { useUser } from '@clerk/nextjs';
 import { Logo } from './Logo';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Playground', href: '/playground', icon: Zap },
-  { name: 'Plugins', href: '/dashboard/plugins', icon: Code },
   { name: 'Models', href: '/models', icon: Rocket },
   { name: 'Documentation', href: '/docs', icon: BookOpen },
 ];
@@ -44,14 +43,7 @@ const secondaryNavigation = [
 
 export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
-  const { fetchUserInfo, isAuthenticated } = useLogto();
-  const [user, setUser] = React.useState<any>(null);
-
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      fetchUserInfo().then(setUser).catch(console.error);
-    }
-  }, [isAuthenticated, fetchUserInfo]);
+  const { isSignedIn, user } = useUser();
 
   return (
     <>
@@ -64,7 +56,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
       )}
 
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 sm:w-72 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl border-r border-border/50 transition-transform duration-300 ease-in-out lg:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-60 sm:w-64 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl border-r border-border/50 transition-transform duration-300 ease-in-out lg:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full pt-6 sm:pt-8 pb-4 sm:pb-6 overflow-y-auto">
@@ -147,37 +139,43 @@ export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () =>
 
         <div className="px-3 sm:px-4 mt-auto space-y-4">
           <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-100 dark:bg-slate-900/50 border border-border/50">
-            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
-                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            {isSignedIn && user ? (
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                {user.imageUrl ? (
+                  <img src={user.imageUrl} alt="avatar" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl" />
+                ) : (
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-xs sm:text-sm font-bold truncate">{user.fullName || user.username || 'User'}</div>
+                  <div className="text-[9px] sm:text-[10px] text-slate-500 truncate">{user.primaryEmailAddress?.emailAddress}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">Pro Plan</div>
-                <div className="text-xs sm:text-sm font-bold">Unlimited Access</div>
+            ) : (
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">Guest</div>
+                  <div className="text-xs sm:text-sm font-bold">Sign in for access</div>
+                </div>
               </div>
-            </div>
+            )}
             <Link 
-              href="/pricing"
+              href="/profile"
               className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-white dark:bg-slate-950 text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all border border-border"
             >
-              Upgrade
+              View Profile
               <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-950 border border-border shadow-sm">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-              {user?.picture ? (
-                <img src={user.picture} alt="Profile" className="h-full w-full object-cover" />
-              ) : (
-                <User className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs sm:text-sm font-black truncate">{user?.name || user?.username || 'User'}</div>
-              <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">Developer</div>
-            </div>
-          </div>
+          <Link href="/profile" className="flex items-center justify-center w-full py-2 rounded-lg border border-border text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800">
+            View Profile
+          </Link>
         </div>
         </div>
       </div>

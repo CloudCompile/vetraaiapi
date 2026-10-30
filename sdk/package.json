@@ -21,7 +21,7 @@
     "gemini",
     "cloudgpt"
   ],
-  "author": "CloudGPT Team",
+  "author": "Elholk Team",
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.0.0"

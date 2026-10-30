@@ -39,7 +39,7 @@ async function testApiKey(key: string, model: string = 'gemini-2.5-pro', baseUrl
   }
 }
 
-const keyToTest = process.argv[2] || 'cgpt_2c33963f422948d381bfab94581db93f';
+const keyToTest = process.argv[2] || 'elholk_2c33963f422948d381bfab94581db93f';
 const modelToTest = process.argv[3] || 'gemini-2.5-pro';
 const baseUrlToTest = process.argv[4] || 'http://localhost:3001';
 

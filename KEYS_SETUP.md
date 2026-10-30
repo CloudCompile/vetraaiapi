@@ -1,6 +1,6 @@
-# 🔑 CloudGPT Keys Setup Guide
+# 🔑 Elholk Keys Setup Guide
 
-This guide explains how to set up all the required API keys and environment variables for CloudGPT to function properly.
+This guide explains how to set up all the required API keys and environment variables for Elholk to function properly.
 
 ## Required Environment Variables
 

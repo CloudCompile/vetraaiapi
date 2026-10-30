@@ -23,7 +23,7 @@ async function upgradeUserByEmail(email: string) {
   try {
     // 1. Get user profile
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
+      .from('elholk_profiles')
       .select('id, email, plan')
       .eq('email', email)
       .maybeSingle();
@@ -48,7 +48,7 @@ async function upgradeUserByEmail(email: string) {
     } else {
       // 2. Update to Pro
       const { error: updateError } = await supabaseAdmin
-        .from('profiles')
+        .from('elholk_profiles')
         .update({ 
           plan: 'pro',
           updated_at: new Date().toISOString()
@@ -88,7 +88,7 @@ async function upgradeUserByEmail(email: string) {
         ],
         timestamp: new Date().toISOString(),
         footer: {
-          text: 'CloudGPT Manual Admin Action'
+          text: 'Elholk Manual Admin Action'
         }
       };
 

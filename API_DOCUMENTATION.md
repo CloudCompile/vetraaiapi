@@ -1,6 +1,6 @@
-# CloudGPT API Documentation
+# Elholk API Documentation
 
-Complete API reference for CloudGPT - Unified AI API Gateway
+Complete API reference for Elholk - Unified AI API Gateway
      
 ## Table of Contents
 
@@ -69,31 +69,31 @@ All errors follow this format:
 
 ## Custom Headers
 
-CloudGPT automatically adds or propagates headers to upstream providers (like PolliStack/Meridian) for user differentiation and storage isolation:
+Elholk automatically adds or propagates headers to upstream providers (like PolliStack/Meridian) for user differentiation and storage isolation:
 
 | Header | Value / Source | Description |
 |--------|----------------|-------------|
-| `X-App-Source` | `CloudGPT-Website` or `CloudGPT-API` | Identifies if the request came from the official playground or a 3rd party API client. |
+| `X-App-Source` | `Elholk-Website` or `Elholk-API` | Identifies if the request came from the official playground or a 3rd party API client. |
 | `x-user-id` | Logto ID, API Key User ID, or IP-based ID | A unique identifier for the end-user, ensuring isolated storage/memory in backend routers. |
 
 *Note: API clients can pass their own `x-user-id` header to override the default identification for their end-users.*
 
 ## Transparency & Data Privacy
 
-CloudGPT is committed to being an honest and transparent AI gateway. Here is exactly how we handle your information and how our routing works.
+Elholk is committed to being an honest and transparent AI gateway. Here is exactly how we handle your information and how our routing works.
 
 ### Stateless Architecture
-CloudGPT acts as a **stateless router**. This means:
+Elholk acts as a **stateless router**. This means:
 - We **do not store** chat messages, generated images, or video files on our own infrastructure.
 - We **do not train** models on your data.
 - We only store metadata (timestamps, model IDs, token counts) necessary for billing and rate-limiting.
 
 ### Routing Logic
-When a request hits CloudGPT, it follows this flow:
+When a request hits Elholk, it follows this flow:
 1. **Auth Check:** The `Authorization` header is validated.
 2. **User ID Derivation:** A unique ID is assigned to the request based on the [User Identification Chain](#user-identification-chain).
 3. **Provider Selection:** The request is mapped to an upstream provider (e.g., Pollinations, Meridian, OpenRouter).
-4. **Header Injection:** CloudGPT injects `X-App-Source` and `x-user-id` headers before forwarding the request.
+4. **Header Injection:** Elholk injects `X-App-Source` and `x-user-id` headers before forwarding the request.
 
 ### User Identification Chain
 To ensure data isolation (especially for the Memory API), we identify users in this order:
@@ -103,10 +103,10 @@ To ensure data isolation (especially for the Memory API), we identify users in t
 4. **Anonymous IP:** The public IP address of the requester (fallback).
 
 ### Data Storage & Third Parties
-While CloudGPT is stateless, our upstream providers may have different policies:
-- **Memory API (Meridian):** Conversation context is stored in a cognitive substrate managed by Meridian Labs. This data is isolated by the user ID provided by CloudGPT.
+While Elholk is stateless, our upstream providers may have different policies:
+- **Memory API (Meridian):** Conversation context is stored in a cognitive substrate managed by Meridian Labs. This data is isolated by the user ID provided by Elholk.
 - **Image/Video (Pollinations):** Generated media is temporarily cached on Pollinations' edge servers to allow for download and retrieval.
-- **Provider Keys:** CloudGPT uses its own master keys for upstream providers; your API keys are never shared with them.
+- **Provider Keys:** Elholk uses its own master keys for upstream providers; your API keys are never shared with them.
 
 ## Endpoints
 
@@ -188,7 +188,7 @@ Generate text completions with long-term cognitive recall using the Meridian sub
   "messages": [
     {
       "role": "user",
-      "content": "Remember that my favorite project is CloudGPT."
+      "content": "Remember that my favorite project is Elholk."
     }
   ]
 }
@@ -204,7 +204,7 @@ Generate text completions with long-term cognitive recall using the Meridian sub
 
 ```json
 {
-  "response": "I've noted that your favorite project is CloudGPT. I'll remember this for our future interactions!"
+  "response": "I've noted that your favorite project is Elholk. I'll remember this for our future interactions!"
 }
 ```
 
@@ -310,7 +310,7 @@ Get available models for all modalities (Chat, Image, Video) in a single OpenAI-
 
 ## Provider Support
 
-CloudGPT aggregates multiple top-tier AI providers:
+Elholk aggregates multiple top-tier AI providers:
 
 | Provider | Description |
 |----------|-------------|

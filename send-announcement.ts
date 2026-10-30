@@ -46,7 +46,7 @@ async function sendAnnouncement() {
       }
     ],
     footer: {
-      text: 'CloudGPT Performance Update',
+      text: 'Elholk Performance Update',
       icon_url: 'https://raw.githubusercontent.com/lucide-software/lucide/main/icons/zap.png'
     },
     timestamp: new Date().toISOString()

@@ -1,12 +1,17 @@
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { generateApiKey } from '@/lib/api-keys';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ keys: [] });
+  }
   try {
-    const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+    const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
     
     if (!isAuthenticated || !claims) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -18,7 +23,7 @@ export async function GET() {
     // No need to sync here to avoid duplicate webhook notifications
 
     const { data: keys, error } = await supabaseAdmin
-      .from('api_keys')
+      .from('elholk_api_keys')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -55,8 +60,13 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+  }
   try {
-    const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+    const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
     
     if (!isAuthenticated || !claims) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -71,7 +81,7 @@ export async function POST(request: NextRequest) {
     let profileData;
     try {
       const { data: profile, error: profileError } = await supabaseAdmin
-        .from('profiles')
+        .from('elholk_profiles')
         .select('plan')
         .eq('id', userId)
         .maybeSingle();
@@ -99,7 +109,7 @@ export async function POST(request: NextRequest) {
     console.log(`[POST /api/keys] Attempting to insert key into public.api_keys table...`);
 
     const { data, error, status, statusText } = await supabaseAdmin
-      .from('api_keys')
+      .from('elholk_api_keys')
       .insert(newKey)
       .select()
       .maybeSingle();
@@ -121,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     // Verify persistence by reading it back
     const { data: verifiedData, error: verifyError } = await supabaseAdmin
-      .from('api_keys')
+      .from('elholk_api_keys')
       .select('*')
       .eq('id', data.id)
       .maybeSingle();
@@ -153,7 +163,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+    const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
   
   if (!isAuthenticated || !claims) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -169,7 +181,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   const { error } = await supabaseAdmin
-    .from('api_keys')
+    .from('elholk_api_keys')
     .delete()
     .eq('id', keyId)
     .eq('user_id', userId);

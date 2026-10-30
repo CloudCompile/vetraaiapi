@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useLogto } from '@logto/react';
+import { useUser } from '@clerk/nextjs';
 import { Crown, Shield, Zap, ArrowUpCircle } from 'lucide-react';
 import { cn, hasProAccess } from '@/lib/utils';
 import Link from 'next/link';
@@ -10,7 +10,7 @@ import Link from 'next/link';
 let profileCache: { role: string; plan: string; timestamp: number } | null = null;
 
 export function UserStatus() {
-  const { isAuthenticated } = useLogto();
+  const { isSignedIn: isAuthenticated } = useUser();
   const [profile, setProfile] = useState<{ role: string; plan: string } | null>(profileCache);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
+
 import { extractApiKey, validateApiKey, trackUsage, checkRateLimit, getRateLimitInfo, checkDailyLimit, getDailyLimitInfo, ApiKey, applyPlanOverride, applyPeakHoursLimit } from '@/lib/api-keys';
 import { CHAT_MODELS, PROVIDER_URLS } from '@/lib/providers';
 import { getCorsHeaders, safeResponseJson } from '@/lib/utils';
@@ -23,7 +23,9 @@ export async function POST(request: NextRequest) {
   try {
     let sessionUserId = null;
     try {
-      const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+      const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
       if (isAuthenticated && claims) {
         sessionUserId = claims.sub;
       }
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
       }
     } else if (sessionUserId) {
       const { data: profile } = await supabaseAdmin
-        .from('profiles')
+        .from('elholk_profiles')
         .select('plan, email')
         .eq('id', sessionUserId)
         .maybeSingle();

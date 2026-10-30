@@ -1,6 +1,6 @@
 
 async function testGeminiRaw() {
-  const apiKey = 'cgpt_822b7637a03648abb9d59e460c1fe921';
+  const apiKey = 'elholk_822b7637a03648abb9d59e460c1fe921';
   const model = 'gemini';
   
   console.log(`Testing raw response for model: ${model}`);

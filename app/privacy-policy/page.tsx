@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | CloudGPT',
-  description: 'Learn how CloudGPT collects, uses, and protects your data when using our unified AI API platform.',
+  title: 'Privacy Policy | Elholk',
+  description: 'Learn how Elholk collects, uses, and protects your data when using our unified AI API platform.',
 };
 
 const sections = [

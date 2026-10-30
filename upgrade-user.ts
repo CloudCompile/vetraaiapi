@@ -14,7 +14,7 @@ async function upgradeUser() {
   console.log(`Upgrading user ${userId} to pro...`);
   
   const { data, error } = await supabase
-    .from('profiles')
+    .from('elholk_profiles')
     .update({ plan: 'pro', subscription_status: 'active' })
     .eq('id', userId);
     

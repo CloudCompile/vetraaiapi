@@ -1,9 +1,16 @@
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
 import { syncUser } from '@/lib/admin-actions';
 
 export async function SyncUser() {
-  const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return null;
+  }
+
+  const clerkUser = await currentUser();
+  const isAuthenticated = !!clerkUser;
+  const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress || '', username: clerkUser.username || '', name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl || '' } : null;
 
   if (isAuthenticated && claims && claims.sub) {
     // Logto claims usually have email if the 'email' scope is requested

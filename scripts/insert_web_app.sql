@@ -2,7 +2,7 @@ INSERT INTO applications (tenant_id, id, name, secret, type, oidc_client_metadat
 VALUES (
     'default',
     'qcma8qo4f4req96mhc5kl',
-    'CloudGPT Web App',
+    'Elholk Web App',
     'A3JW4aZgqcSc8vUA7uP9IdATpAuN6q4I',
     'SPA',
     '{

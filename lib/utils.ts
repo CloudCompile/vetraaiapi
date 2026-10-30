@@ -25,12 +25,7 @@ export function getPollinationsApiKeys(): string[] {
   ];
 
   const keys = [
-    process.env.POLLINATIONS_API_KEY_2,
     process.env.POLLINATIONS_API_KEY,
-    process.env.POLLINATIONS_API_KEY_1,
-    process.env.POLLINATIONS_API_KEY_3,
-    process.env.POLLINATIONS_API_KEY_5,
-    process.env.POLLINATIONS_KEY_3,
   ].filter(Boolean) as string[];
   
   // Filter out invalid keys and duplicates

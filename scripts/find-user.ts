@@ -20,7 +20,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function findUser(query: string) {
   const { data: profile, error } = await supabase
-    .from('profiles')
+    .from('elholk_profiles')
     .select('*')
     .or(`email.eq.${query},id.eq.${query}`)
     .maybeSingle();

@@ -1,4 +1,4 @@
-// Error handling utilities for CloudGPT API
+// Error handling utilities for Elholk API
 // Provides structured error types, provider-specific error codes, and retry suggestions
 
 import { NextResponse } from 'next/server';
@@ -59,7 +59,7 @@ export interface ApiError {
 const PROVIDER_DISPLAY_NAMES: Record<ProviderName, string> = {
   pollinations: 'Pollinations',
   openrouter: 'OpenRouter',
-  stablehorde: 'Stable Horde',
+  stablehorde: 'AI Horde',
   meridian: 'Meridian',
   github: 'GitHub Models',
   poe: 'Poe',

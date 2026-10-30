@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
+
 import { supabaseAdmin } from '@/lib/supabase';
 import { getDailyLimitInfo, applyPlanOverride, applyPeakHoursLimit, isPeakHours } from '@/lib/api-keys';
 import { getCorsHeaders } from '@/lib/utils';
@@ -9,7 +9,9 @@ export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+    const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
     
     if (!isAuthenticated || !claims) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: getCorsHeaders() });
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Get user profile to determine plan
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
+      .from('elholk_profiles')
       .select('plan, email')
       .eq('id', userId)
       .maybeSingle();

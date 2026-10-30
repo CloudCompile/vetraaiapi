@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
+
 import { extractApiKey, validateApiKey, trackUsage, checkRateLimit, getRateLimitInfo, applyPeakHoursLimit } from '@/lib/api-keys';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,9 @@ export async function POST(request: NextRequest) {
     // Get user from session
     let sessionUserId = null;
     try {
-      const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+      const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
       if (isAuthenticated && claims) {
         sessionUserId = claims.sub;
       }
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
       // Ignore auth error for API keys
     }
 
-    // Extract and validate CloudGPT API key
+    // Extract and validate Elholk API key
     const rawApiKey = extractApiKey(request.headers);
     if (!rawApiKey) {
       return NextResponse.json(
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
       'Content-Type': 'application/json',
       'x-api-key': substrateApiKey,
       'x-user-id': userId,
-      'X-App-Source': apiKeyInfo ? 'CloudGPT-API' : 'CloudGPT-Website',
+      'X-App-Source': apiKeyInfo ? 'Elholk-API' : 'Elholk-Website',
     };
 
     // Forward to Substrate API

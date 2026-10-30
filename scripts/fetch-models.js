@@ -20,7 +20,7 @@ async function fetchModels(url, apiKey, name) {
     const response = await fetch(url, {
       headers: { 
         'Authorization': `Bearer ${apiKey}`,
-        'X-App-Source': 'CloudGPT'
+        'X-App-Source': 'Elholk'
       }
     });
     

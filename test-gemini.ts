@@ -27,7 +27,7 @@ async function testModel(model: string, apiKey: string) {
 }
 
 async function runTests() {
-  const apiKey = 'cgpt_822b7637a03648abb9d59e460c1fe921';
+  const apiKey = 'elholk_822b7637a03648abb9d59e460c1fe921';
   
   // Test models from different providers
   await testModel('gemini-fast', apiKey); // provider: gemini (pollinations)

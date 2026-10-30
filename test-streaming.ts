@@ -1,6 +1,6 @@
 
 async function testStreaming() {
-  const apiKey = 'cgpt_a17273722c99488181a4a342795e8d00';
+  const apiKey = 'elholk_a17273722c99488181a4a342795e8d00';
   const model = 'gemini';
   
   console.log(`Testing streaming for model: ${model}`);

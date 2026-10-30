@@ -14,12 +14,12 @@ async function sendFluxContestAnnouncement() {
     fields: [
       {
         name: '🖼️ The Challenge',
-        value: 'You’ll be given a starter prompt. Your job is to twist, remix, and mutate it into the best image you can generate using Flux on CloudGPT. Make Flux do something it probably regrets.',
+        value: 'You’ll be given a starter prompt. Your job is to twist, remix, and mutate it into the best image you can generate using Flux on Elholk. Make Flux do something it probably regrets.',
         inline: false
       },
       {
         name: '🏆 The Prize',
-        value: '**1 Month of CloudGPT Pro** for the winner!',
+        value: '**1 Month of Elholk Pro** for the winner!',
         inline: false
       },
       {
@@ -39,7 +39,7 @@ async function sendFluxContestAnnouncement() {
       }
     ],
     footer: {
-      text: 'CloudGPT Flux Contest — The Art of the Prompt',
+      text: 'Elholk Flux Contest — The Art of the Prompt',
       icon_url: 'https://raw.githubusercontent.com/lucide-software/lucide/main/icons/image.png'
     },
     timestamp: new Date().toISOString()

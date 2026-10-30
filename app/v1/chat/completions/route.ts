@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
+
 import { extractApiKey, validateApiKey, trackUsage, checkRateLimit, getRateLimitInfo, checkDailyLimit, getDailyLimitInfo, ApiKey, applyPlanOverride, applyPeakHoursLimit } from '@/lib/api-keys';
-import { runFandomPlugin } from '@/lib/plugins';
 import { CHAT_MODELS, PREMIUM_MODELS } from '@/lib/providers';
-import { getCorsHeaders, getPollinationsApiKey, getPollinationsApiKeys, getClaudeApiKey, getClaudeApiKeys, getOpenRouterApiKey, getOpenRouterApiKeys, getPoeApiKey, getPoeApiKeys, getLizApiKey, getLizApiKeys, safeResponseJson, hasProAccess } from '@/lib/utils';
+import { getCorsHeaders, getPollinationsApiKey, getPollinationsApiKeys, getClaudeApiKey, getClaudeApiKeys, getOpenRouterApiKey, getOpenRouterApiKeys, getPoeApiKey, getPoeApiKeys, safeResponseJson, hasProAccess } from '@/lib/utils';
 import { retrieveMemory, rememberInteraction } from '@/lib/memory';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
@@ -34,7 +33,7 @@ function getStableHordeTextModelName(modelId: string): string {
     'stable-horde-qwen3-4b': 'Qwen3 4B',
     'stable-horde-neonmaid-12b': 'NeonMaid-12B-v2',
   };
-  return modelMap[modelId] || 'Mistral 7B Instruct';
+  return modelMap[modelId] || modelId;
 }
 
 // Handle Stable Horde text generation
@@ -51,8 +50,8 @@ async function handleStableHordeChat(
   characterId?: string
 ): Promise<NextResponse> {
   // '0000000000' is Stable Horde's official anonymous API key for rate-limited access
-  const hordeApiKey = process.env.STABLE_HORDE_API_KEY || process.env.STABLEHORDE_API_KEY || '0000000000';
-  if (!process.env.STABLE_HORDE_API_KEY && !process.env.STABLEHORDE_API_KEY) {
+  const hordeApiKey = process.env.AI_HORDE_API_KEY || process.env.STABLE_HORDE_API_KEY || process.env.STABLEHORDE_API_KEY || '0000000000';
+  if (!process.env.AI_HORDE_API_KEY && !process.env.STABLE_HORDE_API_KEY && !process.env.STABLEHORDE_API_KEY) {
     console.warn('STABLE_HORDE_API_KEY not set, using anonymous access with reduced rate limits');
   }
   const hordeUrl = PROVIDER_URLS.stablehorde;
@@ -83,7 +82,7 @@ async function handleStableHordeChat(
       headers: {
         'Content-Type': 'application/json',
         'apikey': hordeApiKey,
-        'Client-Agent': 'CloudGPT:1.0:cloudgptapi@github.com',
+        'Client-Agent': 'Elholk:1.0:cloudgptapi@github.com',
       },
       body: JSON.stringify(generateRequest),
     });
@@ -114,7 +113,7 @@ async function handleStableHordeChat(
     while (Date.now() - startTime < maxWaitTime) {
       const checkResponse = await fetch(`${hordeUrl}/generate/text/status/${requestId}`, {
         headers: {
-          'Client-Agent': 'CloudGPT:1.0:cloudgptapi@github.com',
+          'Client-Agent': 'Elholk:1.0:cloudgptapi@github.com',
         },
       });
       
@@ -260,7 +259,9 @@ export async function POST(request: NextRequest) {
     // Get user from session (for website users)
     let sessionUserId = null;
     try {
-      const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+      const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
       if (isAuthenticated && claims) {
         sessionUserId = claims.sub;
         console.log(`[${requestId}] Session User ID: ${sessionUserId}`);
@@ -291,7 +292,7 @@ export async function POST(request: NextRequest) {
     } else if (sessionUserId) {
       // Fetch plan for session users if no API key is provided
       const { data: profile } = await supabaseAdmin
-        .from('profiles')
+        .from('elholk_profiles')
         .select('plan, email')
         .eq('id', sessionUserId)
         .maybeSingle();
@@ -433,7 +434,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get model or use default, resolved through aliases via resolveModelId
-    const modelId = resolveModelId(body.model || 'openai');
+    const rawRequestedModel = body.model || 'openai';
+    const providerHint = rawRequestedModel.startsWith('polli/') ? 'pollinations' : rawRequestedModel.startsWith('horde/') ? 'stablehorde' : null;
+    const strippedRequestedModel = rawRequestedModel.replace(/^polli\//, '').replace(/^horde\//, '');
+    const modelId = resolveModelId(strippedRequestedModel);
 
     // Check if model is premium and if user has access
     const isPremium = PREMIUM_MODELS.has(modelId);
@@ -547,52 +551,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // --- Remote Fandom Knowledge Plugin ---
-      // The VPS service now handles the check for whether the plugin is enabled
-      // and performs real scraping of fandom/wiki data.
-      console.log(`[${requestId}] Running Remote Fandom Plugin for key: ${apiKeyInfo?.id || 'unknown'}`);
-      const originalMessages = [...body.messages];
-      
-      body.messages = await runFandomPlugin(body.messages, apiKeyInfo?.fandomSettings as any, apiKeyInfo?.id, modelId);
-      
-      // Model-Adaptive Plugin Injection Logic:
-      // If lore was injected, we may need to adjust the message roles for specific models
-      if (body.messages.length > originalMessages.length) {
-        console.log(`[${requestId}] Fandom Knowledge Plugin injected lore from remote VPS.`);
-        
-        const isGemini = modelId.includes('gemini');
-        if (isGemini) {
-          // Gemini is sensitive to multiple system messages or system messages in the middle.
-          // We convert newly added system messages to user-visible context notes.
-          body.messages = body.messages.map((msg: any, idx: number) => {
-            // If this message was NOT in the original array and is a system message
-            const isNew = !originalMessages.some(orig => orig.role === msg.role && orig.content === msg.content);
-            if (isNew && msg.role === 'system') {
-              console.log(`[${requestId}] ADAPTIVE: Converting injected system message to user context for Gemini.`);
-              
-              // Lore Compression: Gemini models perform better with shorter context notes.
-              // We use a token-aware approach to ensure the prompt stays within stable limits.
-              let content = msg.content;
-              const loreTokens = estimateTokens(content);
-              const maxLoreTokens = 800; // ~3200 chars, but safer to use token estimation
-              
-              if (loreTokens > maxLoreTokens) {
-                console.log(`[${requestId}] ADAPTIVE: Compressing long lore snippet (${loreTokens} tokens) for Gemini stability.`);
-                // Keep only the first ~800 tokens worth of content
-                const targetCharCount = maxLoreTokens * 4;
-                content = content.substring(0, targetCharCount) + '... [Lore truncated for stability]';
-              }
-
-              return {
-                role: 'user',
-                content: `[Knowledge Context]: ${content}\n\nPlease use the above information to inform your response.`
-              };
-            }
-            return msg;
-          });
-        }
-      }
-      // ------------------------------------------
+      // (plugins removed)
 
     } catch (memError) {
       console.error('Memory retrieval failed:', memError);
@@ -608,26 +567,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const model = CHAT_MODELS.find(m => m.id === modelId);
-    
+    let model = CHAT_MODELS.find(m => m.id === modelId);
     if (!model) {
-      const popularModels = CHAT_MODELS.slice(0, 10).map(m => m.id).join(', ');
-      console.warn(`[${requestId}] Unknown model: ${modelId}`);
-      return NextResponse.json(
-        { 
-          error: {
-            message: `Unknown model: ${modelId}. Popular models: ${popularModels}, and more. Use /v1/models to see the full list of ${CHAT_MODELS.length} models.`,
-            type: 'invalid_request_error',
-            param: 'model',
-            code: 'model_not_found',
-            request_id: requestId
-          }
-        },
-        { 
-          status: 400,
-          headers: getCorsHeaders()
-        }
-      );
+      // Dynamic model resolution for upstream providers
+      const provider = providerHint || ((modelId.includes(':free') || modelId.toLowerCase().endsWith('-free')) ? 'pollinations' : 'stablehorde');
+      model = {
+        id: modelId,
+        name: modelId,
+        provider,
+        usageWeight: 1,
+        type: 'chat'
+      } as any;
     }
 
     // Maintenance Check
@@ -657,78 +607,9 @@ export async function POST(request: NextRequest) {
     let providerUrl: string;
     let providerApiKey: string | undefined;
     
-    if (model.provider === 'openrouter') {
-      providerUrl = `${PROVIDER_URLS.openrouter}/api/v1/chat/completions`;
-      providerApiKey = getOpenRouterApiKey();
-    } else if (model.provider === 'gemini') {
-      providerUrl = `${PROVIDER_URLS.pollinations}/v1/chat/completions`;
-      providerApiKey = getPollinationsApiKey();
-    } else if (model.provider === 'claude') {
-      providerUrl = `${PROVIDER_URLS.pollinations}/v1/chat/completions`;
-      providerApiKey = getClaudeApiKey();
-    } else if (model.provider === 'meridian') {
-      providerUrl = `${PROVIDER_URLS.meridian}/chat`;
-      providerApiKey = process.env.MERIDIAN_API_KEY;
-    } else if (model.provider === 'github') {
-      providerUrl = `${PROVIDER_URLS.github}/chat/completions`;
-      providerApiKey = process.env.GITHUB_TOKEN;
-      
-      if (!providerApiKey) {
-        console.warn(`[${requestId}] Missing GitHub token for model: ${modelId}`);
-        return NextResponse.json(
-          {
-            error: {
-              message: 'GitHub Models token is not configured. Please add GITHUB_TOKEN to your .env.local file.',
-              type: 'config_error',
-              param: null,
-              code: 'missing_api_key',
-              request_id: requestId
-            }
-          },
-          { status: 500, headers: getCorsHeaders() }
-        );
-      }
-    } else if (model.provider === 'poe') {
-      providerUrl = `${PROVIDER_URLS.poe}/chat/completions`;
-      providerApiKey = getPoeApiKey();
-      
-      if (!providerApiKey) {
-        console.warn(`[${requestId}] Missing Poe API key for model: ${modelId}`);
-        return NextResponse.json(
-          {
-            error: {
-              message: 'Poe API key is not configured. Please add POE_API_KEY to your .env.local file.',
-              type: 'config_error',
-              param: null,
-              code: 'missing_api_key',
-              request_id: requestId
-            }
-          },
-          { status: 500, headers: getCorsHeaders() }
-        );
-      }
-    } else if (model.provider === 'liz') {
-      providerUrl = `${PROVIDER_URLS.liz}/v1/chat/completions`;
-      providerApiKey = getLizApiKey();
-      
-      if (!providerApiKey) {
-        console.warn(`[${requestId}] Missing Liz API key for model: ${modelId}`);
-        return NextResponse.json(
-          {
-            error: {
-              message: 'Liz API key is not configured. Please add LIZ_API_KEY to your .env.local file.',
-              type: 'config_error',
-              param: null,
-              code: 'missing_api_key',
-              request_id: requestId
-            }
-          },
-          { status: 500, headers: getCorsHeaders() }
-        );
-      }
-    } else if (model.provider === 'stablehorde') {
-      // Handle Stable Horde text generation
-      return await handleStableHordeChat(body, modelId, apiKeyInfo, userId, effectiveKey, requestId, limit, dailyLimit, isSystemRequest, characterId);
+    if (model.provider === 'stablehorde') {
+      providerUrl = 'https://oai.aihorde.net/v1/chat/completions';
+      providerApiKey = process.env.AI_HORDE_API_KEY || process.env.STABLE_HORDE_API_KEY || process.env.STABLEHORDE_API_KEY || '0000000000';
     } else {
       providerUrl = `${PROVIDER_URLS.pollinations}/v1/chat/completions`;
       providerApiKey = getPollinationsApiKey();
@@ -753,7 +634,7 @@ export async function POST(request: NextRequest) {
     // Build headers based on provider
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-App-Source': apiKeyInfo ? 'CloudGPT-API' : 'CloudGPT-Website',
+      'X-App-Source': apiKeyInfo ? 'Elholk-API' : 'Elholk-Website',
       ...(providerApiKey && {
         'Authorization': `Bearer ${providerApiKey}`,
       }),
@@ -963,19 +844,11 @@ export async function POST(request: NextRequest) {
     }
 
     // --- STANDARD PROXY LOGIC (FALLBACK) ---
-    
-    // Meridian requires x-api-key header instead of Authorization
-    if (model.provider === 'meridian') {
-      delete headers['Authorization'];
-      if (providerApiKey) {
-        headers['x-api-key'] = providerApiKey;
-      }
-    }
 
     // OpenRouter requires additional headers
     if (model.provider === 'openrouter') {
       headers['HTTP-Referer'] = process.env.NEXT_PUBLIC_SITE_URL || 'https://cloudgptapi.vercel.app';
-      headers['X-Title'] = 'CloudGPT API';
+      headers['X-Title'] = 'Elholk API';
     }
 
     // Prepare request body based on provider
@@ -987,12 +860,7 @@ export async function POST(request: NextRequest) {
       requestBody.model = PROVIDER_MODEL_MAPPING[modelId];
     }
     
-    if (model.provider === 'meridian') {
-      // Meridian expects a simple "prompt" field, not "messages"
-      const prompt = body.messages
-        .map((msg: any) => `${msg.role}: ${msg.content}`)
-        .join('\n');
-      requestBody = { prompt };
+    if (false) {
     } else {
       // Models that don't support temperature/top_p on GitHub
       const isGitHubReasoningModel = model.provider === 'github' && [
@@ -1008,7 +876,6 @@ export async function POST(request: NextRequest) {
         model.provider === 'claude' || 
         modelId.includes('gemini') || 
         modelId.includes('claude')) && 
-        model.provider !== 'liz' && 
         model.provider !== 'openrouter';
 
       if (isGitHubReasoningModel) {
@@ -1048,14 +915,12 @@ export async function POST(request: NextRequest) {
       console.log(`[${requestId}] Provider response status: ${providerResponse.status} ${providerResponse.statusText}`);
       
       // Fallback for Pollinations/OpenRouter/Poe/Liz auth errors (401)
-      if ((model.provider === 'pollinations' || model.provider === 'gemini' || model.provider === 'claude' || model.provider === 'openrouter' || model.provider === 'poe' || model.provider === 'liz') && providerResponse.status === 401) {
+      if ((model.provider === 'pollinations' || model.provider === 'gemini' || model.provider === 'claude' || model.provider === 'openrouter' || model.provider === 'poe') && providerResponse.status === 401) {
         let availableKeys: string[] = [];
         if (model.provider === 'openrouter') {
           availableKeys = getOpenRouterApiKeys();
         } else if (model.provider === 'poe') {
           availableKeys = getPoeApiKeys();
-        } else if (model.provider === 'liz') {
-          availableKeys = getLizApiKeys();
         } else if (model.provider === 'claude') {
           availableKeys = getClaudeApiKeys();
         } else {
@@ -1461,30 +1326,7 @@ export async function POST(request: NextRequest) {
     // Transform provider responses to match OpenAI format
     let responseData: any = data;
     
-    if (model.provider === 'meridian') {
-      // Meridian returns { response: "..." }
-      responseData = {
-        id: 'meridian-' + Date.now(),
-        object: 'chat.completion',
-        created: Math.floor(Date.now() / 1000),
-        model: modelId,
-        choices: [
-          {
-            index: 0,
-            message: {
-              role: 'assistant',
-              content: (data as any)?.response || '',
-            },
-            finish_reason: 'stop',
-          },
-        ],
-        usage: {
-          prompt_tokens: 0,
-          completion_tokens: 0,
-          total_tokens: 0,
-        },
-      };
-    } else if (model.provider === 'pollinations') {
+ if (model.provider === 'pollinations') {
       // Pollinations might return different formats, ensure it matches OpenAI
       if (data && !(data as any).choices && (data as any).content) {
         responseData = {
@@ -1548,7 +1390,7 @@ export async function POST(request: NextRequest) {
     // If the response is exceptionally long (> 12KB), we add a warning/truncation indicator
     if (modelId === 'gemini-large' && assistantContent.length > 12000) {
       console.warn(`[${requestId}] Extremely long response detected (${assistantContent.length} chars). Truncating for frontend compatibility.`);
-      assistantContent = assistantContent.substring(0, 12000) + '\n\n[Response truncated by CloudGPT for frontend compatibility. Use "Continue" to fetch more if supported.]';
+      assistantContent = assistantContent.substring(0, 12000) + '\n\n[Response truncated by Elholk for frontend compatibility. Use "Continue" to fetch more if supported.]';
       if (responseData.choices[0].message) {
         responseData.choices[0].message.content = assistantContent;
       }

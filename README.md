@@ -1,4 +1,4 @@
-# ☁️ CloudGPT - Unified AI API Gateway
+# ☁️ Elholk - Unified AI API Gateway
 
 A unified API gateway for AI chat, image, and video generation. Access multiple AI providers through a single, consistent API interface.
 

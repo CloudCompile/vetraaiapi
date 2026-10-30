@@ -21,9 +21,9 @@ export interface ApiKey {
   };
 }
 
-// Generate a new API key with the cgpt_ prefix
+// Generate a new API key with the elholk_ prefix
 export function generateApiKey(): string {
-  const prefix = 'cgpt_';
+  const prefix = 'elholk_';
   const key = uuidv4().replace(/-/g, '');
   return `${prefix}${key}`;
 }
@@ -34,7 +34,7 @@ export function extractApiKey(headers: Headers): string | null {
   if (authHeader?.startsWith('Bearer ')) {
     const key = authHeader.substring(7);
     // Validate key format before returning
-    if (key.startsWith('cgpt_') && key.length === 37) {
+    if (key.startsWith('elholk_') && key.length === 40) {
       return key;
     }
   }
@@ -68,7 +68,7 @@ export function applyPeakHoursLimit(baseLimit: number): number {
   export async function validateApiKey(key: string): Promise<ApiKey | null> {
     // First get the API key
     const { data, error } = await supabaseAdmin
-      .from('api_keys')
+      .from('elholk_api_keys')
       .select('*')
       .eq('key', key)
       .maybeSingle();
@@ -85,14 +85,14 @@ export function applyPeakHoursLimit(baseLimit: number): number {
   
     // Then get the profile separately to avoid relationship issues
     const { data: profile } = await supabaseAdmin
-      .from('profiles')
+      .from('elholk_profiles')
       .select('plan, email')
       .eq('id', data.user_id)
       .maybeSingle();
   
     // Update last used at
     await supabaseAdmin
-      .from('api_keys')
+      .from('elholk_api_keys')
       .update({ last_used_at: new Date().toISOString() })
       .eq('id', data.id);
   
@@ -164,7 +164,7 @@ export async function trackUsage(
 
   // Log detailed usage
   await supabaseAdmin
-    .from('usage_logs')
+    .from('elholk_usage_logs')
     .insert({
       api_key_id: apiKeyId,
       user_id: userId,
@@ -200,7 +200,7 @@ export async function applyPlanOverride(email: string, currentPlan: string, user
   if (needsUpdate && !overrideCache.has(userIdOrEmail)) {
     try {
       overrideCache.add(userIdOrEmail);
-      const query = supabaseAdmin.from('profiles').update({ plan: newPlan });
+      const query = supabaseAdmin.from('elholk_profiles').update({ plan: newPlan });
       if (identifierType === 'id') {
         await query.eq('id', userIdOrEmail);
       } else {
@@ -296,7 +296,7 @@ export async function getRateLimitInfo(key: string, limit: number = 60, type: st
   
   try {
     const { data, error } = await supabaseAdmin
-      .from('rate_limits')
+      .from('elholk_rate_limits')
       .select('count, reset_at')
       .eq('key', rateLimitKey)
       .maybeSingle();
@@ -322,7 +322,7 @@ export async function getDailyLimitInfo(key: string, limit: number = 1000, apiKe
   if (apiKeyId) {
     try {
       const { data, error } = await supabaseAdmin
-        .from('api_keys')
+        .from('elholk_api_keys')
         .select('daily_usage_count, last_reset_at')
         .eq('id', apiKeyId)
         .maybeSingle();
@@ -358,7 +358,7 @@ export async function getDailyLimitInfo(key: string, limit: number = 1000, apiKe
   
   try {
     const { data, error } = await supabaseAdmin
-      .from('rate_limits')
+      .from('elholk_rate_limits')
       .select('count, reset_at')
       .eq('key', dailyKey)
       .maybeSingle();

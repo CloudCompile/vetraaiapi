@@ -1,12 +1,15 @@
-import { getLogtoContext } from '@logto/next/server-actions';
-import { logtoConfig } from '@/lib/logto';
+import { currentUser } from '@clerk/nextjs/server';
+
 import { Shield, Users, CreditCard, Activity, Search, AlertCircle, Check, X, ArrowUpRight, Crown, Package } from 'lucide-react';
-import { getAllUsers, promoteUser, assignPlan } from '@/lib/admin-actions';
+import { getAllUsers, promoteUser } from '@/lib/admin-actions';
 import { supabaseAdmin } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import PendingTierRequests from '@/components/pending-tier-requests';
 
 export default async function AdminPage() {
-  const { isAuthenticated, claims } = await getLogtoContext(logtoConfig);
+    const clerkUser = await currentUser();
+    const isAuthenticated = !!clerkUser;
+    const claims = clerkUser ? { sub: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress, username: clerkUser.username, name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '), picture: clerkUser.imageUrl } : null;
 
   if (!isAuthenticated || !claims) {
     return (
@@ -29,7 +32,7 @@ export default async function AdminPage() {
   }
 
   const { data: profile, error } = await supabaseAdmin
-    .from('profiles')
+    .from('elholk_profiles')
     .select('role')
     .eq('id', claims.sub)
     .single();
@@ -57,6 +60,7 @@ export default async function AdminPage() {
   }
 
   const users = await getAllUsers();
+  const { data: tierRequests } = await supabaseAdmin.from('elholk_tier_requests').select('*').order('created_at', { ascending: false });
 
   return (
     <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -67,7 +71,7 @@ export default async function AdminPage() {
             Admin Dashboard
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Managing CloudGPT platform users and subscriptions.
+            Managing Elholk platform users and subscriptions.
           </p>
         </div>
       </div>
@@ -114,7 +118,6 @@ export default async function AdminPage() {
                 <th className="px-6 py-4 font-semibold">User</th>
                 <th className="px-6 py-4 font-semibold">Role</th>
                 <th className="px-6 py-4 font-semibold">Plan</th>
-                <th className="px-6 py-4 font-semibold">Stripe Product</th>
                 <th className="px-6 py-4 font-semibold">Actions</th>
               </tr>
             </thead>
@@ -161,9 +164,6 @@ export default async function AdminPage() {
                       {userProfile.plan}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-xs font-mono text-slate-500">
-                    {userProfile.stripe_product_id || 'None'}
-                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <form action={async () => {
@@ -176,14 +176,13 @@ export default async function AdminPage() {
                       </form>
                       <form action={async () => {
                         'use server';
-                        const isPro = userProfile.plan === 'pro';
-                        await assignPlan(
-                          userProfile.id, 
-                          isPro ? 'free' : 'pro', 
-                          isPro ? undefined : 'prod_TkaB1ApHkafWT1'
-                        );
+                        const { supabaseAdmin } = await import('@/lib/supabase');
+                        const nextPlan = userProfile.plan === 'pro' ? 'free' : 'pro';
+                        await supabaseAdmin.from('elholk_profiles').update({ plan: nextPlan }).eq('id', userProfile.id);
+                        const { revalidatePath } = await import('next/cache');
+                        revalidatePath('/admin');
                       }}>
-                        <button className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-all" title="Toggle Pro (Dev Package)">
+                        <button className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-all" title="Toggle Pro">
                           <Package className={cn("h-4 w-4", userProfile.plan === 'pro' && "text-emerald-500")} />
                         </button>
                       </form>
@@ -193,13 +192,22 @@ export default async function AdminPage() {
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                     No users found in the database. Users are added when they first log in.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mt-8">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+          <h2 className="text-xl font-bold">Pending Tier Requests</h2>
+        </div>
+        <div className="p-6">
+          <PendingTierRequests initial={tierRequests || []} />
         </div>
       </div>
     </div>

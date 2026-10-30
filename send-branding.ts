@@ -26,7 +26,7 @@ const glyphArt = `\`\`\`txt
 
 async function sendBranding() {
   const embed = {
-    title: '🌩️ CloudGPT | Neural Core Uptime Pulse',
+    title: '🌩️ Elholk | Neural Core Uptime Pulse',
     description: "Cloud GPT provided to you by CJ Hauser and Aaron Miller devs at Pollinations API\n\n" + glyphArt,
     color: 0x00FF00, // Emerald green for uptime/health
     fields: [
@@ -42,7 +42,7 @@ async function sendBranding() {
       }
     ],
     footer: {
-      text: 'CloudGPT Uptime Tracker — Pulse ID: ' + Math.random().toString(36).substring(7).toUpperCase(),
+      text: 'Elholk Uptime Tracker — Pulse ID: ' + Math.random().toString(36).substring(7).toUpperCase(),
     },
     timestamp: new Date().toISOString()
   };
@@ -54,7 +54,7 @@ async function sendBranding() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        content: "✨ **CloudGPT System Pulse Synchronized**",
+        content: "✨ **Elholk System Pulse Synchronized**",
         embeds: [embed]
       }),
     });

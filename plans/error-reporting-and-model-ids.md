@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plan addresses two key improvements to the CloudGPT API:
+This plan addresses two key improvements to the Elholk API:
 1. **Better Error Reporting** - Structured errors with provider context, specific error codes, and retry suggestions
 2. **Better Model IDs** - Expanded OpenAI-compatible aliases and standardized naming conventions
 

@@ -20,10 +20,10 @@ import {
 } from 'lucide-react';
 import { CHAT_MODELS, IMAGE_MODELS, VIDEO_MODELS, PREMIUM_MODELS } from '@/lib/providers';
 import { cn, hasProAccess, hasVideoAccess } from '@/lib/utils';
-import { useLogto } from '@logto/react';
+import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 
-type Mode = 'chat' | 'image' | 'video';
+type Mode = 'chat';
 
 // Countdown hook for downtime
 function useCountdown(targetDate?: string) {
@@ -60,10 +60,11 @@ function useCountdown(targetDate?: string) {
 }
 
 export default function PlaygroundPage() {
-  const { isAuthenticated } = useLogto();
+  const { isSignedIn: isAuthenticated } = useUser();
   const [profile, setProfile] = useState<{ plan: string } | null>(null);
   const [mode, setMode] = useState<Mode>('chat');
-  const [selectedModel, setSelectedModel] = useState(CHAT_MODELS[0].id);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState('');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,13 +72,23 @@ export default function PlaygroundPage() {
   const [videoUrl, setVideoUrl] = useState('');
   const [error, setError] = useState('');
   
-  const currentModels = mode === 'chat' ? CHAT_MODELS : mode === 'image' ? IMAGE_MODELS : VIDEO_MODELS;
+  const currentModels = availableModels.map((id) => ({ id, name: id, provider: 'pollinations' }));
   const selectedModelData = currentModels.find(m => m.id === selectedModel);
   const countdown = useCountdown(selectedModelData?.downtimeUntil);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    fetch('/v1/models')
+      .then((r) => r.json())
+      .then((d) => {
+        const ids = (d?.data || [])
+          .filter((m: any) => !m.type || m.type === 'chat')
+          .map((m: any) => m.id);
+        setAvailableModels(ids);
+        setSelectedModel((prev) => (prev ? prev : (ids[0] || '')));
+      })
+      .catch(() => {});
     if (isAuthenticated) {
       fetch('/api/profile')
         .then(res => res.json())
@@ -102,9 +113,8 @@ export default function PlaygroundPage() {
     setVideoUrl('');
     setMessages([]);
     setError('');
-    if (newMode === 'chat') setSelectedModel(CHAT_MODELS[0].id);
-    if (newMode === 'image') setSelectedModel(IMAGE_MODELS[0].id);
-    if (newMode === 'video') setSelectedModel(VIDEO_MODELS[0].id);
+    if (availableModels[0]) setSelectedModel(availableModels[0]);
+
   };
 
   const handleSubmit = async () => {
@@ -226,8 +236,7 @@ export default function PlaygroundPage() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-4rem)] bg-white dark:bg-slate-950 overflow-hidden relative">
-      <div className="absolute inset-0 mesh-gradient opacity-30 pointer-events-none" />
-      <div className="absolute inset-0 dot-grid opacity-[0.03] pointer-events-none" />
+
 
       {/* Top Controls Bar */}
       <div className="h-auto border-b border-border/50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 py-3 sm:py-2 relative z-20">
@@ -239,18 +248,7 @@ export default function PlaygroundPage() {
               icon={<MessageSquare className="h-3.5 w-3.5" />}
               label="Chat"
             />
-            <ModeButton 
-              active={mode === 'image'} 
-              onClick={() => handleModeChange('image')}
-              icon={<ImageIcon className="h-3.5 w-3.5" />}
-              label="Image"
-            />
-            <ModeButton 
-              active={mode === 'video'} 
-              onClick={() => handleModeChange('video')}
-              icon={<Video className="h-3.5 w-3.5" />}
-              label="Video"
-            />
+
           </div>
 
           <div className="hidden sm:block h-6 w-px bg-border/50" />
@@ -262,10 +260,10 @@ export default function PlaygroundPage() {
               onChange={(e) => setSelectedModel(e.target.value)}
               className="bg-transparent text-xs sm:text-sm font-bold outline-none border-none focus:ring-0 cursor-pointer min-w-[120px]"
             >
-              {currentModels.map(m => {
+              {currentModels.map((m, idx) => {
                 const isPremium = PREMIUM_MODELS.has(m.id);
                 return (
-                  <option key={m.id} value={m.id} className="dark:bg-slate-900">
+                  <option key={`${m.provider}-${m.id}-${idx}`} value={m.id} className="dark:bg-slate-900">
                     {m.name} {isPremium ? '(PRO)' : ''}
                   </option>
                 );
@@ -393,7 +391,7 @@ export default function PlaygroundPage() {
                     <div className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
                     <div className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-primary animate-bounce" />
                   </div>
-                  <span className="text-slate-500 font-medium">CloudGPT is thinking...</span>
+                  <span className="text-slate-500 font-medium">Elholk is thinking...</span>
                 </div>
               </div>
             )}
@@ -489,7 +487,7 @@ export default function PlaygroundPage() {
               <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-border shadow-sm hover:border-primary/30 transition-all group">
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Provider</div>
                 <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  CloudGPT Unified
+                  Elholk Unified
                   <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
                 </p>
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Model ID</div>

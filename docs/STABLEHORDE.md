@@ -1,6 +1,6 @@
 # Stable Horde Provider
 
-This document explains how to use the Stable Horde provider in CloudGPT API.
+This document explains how to use the Stable Horde provider in Elholk API.
 
 ## Overview
 
